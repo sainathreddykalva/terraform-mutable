@@ -4,7 +4,6 @@ help:		## Print Help Message
 clean:
 	@rm -rf .terraform*
 
-
 dev-apply:	clean ## Install Frontend Component
 	@terraform init -backend-config=environments/dev-backend.tfvars -no-color
 	@terraform apply -auto-approve -var-file=environments/dev.tfvars -no-color
