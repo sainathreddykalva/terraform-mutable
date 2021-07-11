@@ -4,21 +4,16 @@ data "aws_ami" "centos7" {
   owners           = ["973714476881"]
 }
 
+data "terraform_remote_state" "vpc" {
+  backend = "s3"
 
-
-output "ami" {
-  value = data.aws_ami.centos7
+  config = {
+    bucket                = "terraform-practice56"
+    key                   = "mutable/vpc/${var.ENV}/terraform.tfstate"
+    region                = "us-east-1"
+  }
 }
-//data "terraform_remote_state" "vpc" {
-//  backend = "s3"
-//
-//  config = {
-//    bucket                = "terraform-practice56"
-//    key                   = "mutable/vpc/${var.ENV}/terraform.tfstate"
-//    region                = "us-east-1"
-//  }
-//}
-//
-//output "outputs" {
-//  value = data.terraform_remote_state.vpc.outputs
-//}
+
+output "outputs" {
+  value = data.terraform_remote_state.vpc.outputs
+}
