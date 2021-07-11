@@ -43,3 +43,28 @@ resource "aws_security_group" "allow_mongodb" {
     Name                      = "AllowMongoDB"
   }
 }
+
+resource "null_resource" "wait" {
+  provisioner "local-exec" {
+    command                   = "sleep 30"
+  }
+}
+
+resource "null_resource" "ansible-mongo" {
+  depends_on = [null_resource.wait]
+  provisioner "remote-exec" {
+    connection {
+      host                    = aws_spot_instance_request.mongodb.private_ip
+      user                    = jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["SSH_USER"]
+      password                = jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["SSH_PASS"]
+    }
+
+    inline = [
+      "sudo yum install python3-pip -y",
+      "sudo pip3 install pip --upgrade",
+      "sudo pip3 install ansible==4.1.0",
+      "ansible-pull -i localhost, -U https://DevOps-Batches@dev.azure.com/DevOps-Batches/DevOps56/_git/ansible roboshop-pull.yml -e COMPONENT=mongodb"
+    ]
+
+  }
+}
