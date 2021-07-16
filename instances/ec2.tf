@@ -1,18 +1,26 @@
-resource "aws_spot_instance_request" "mongodb" {
+resource "aws_spot_instance_request" "instances" {
+  count                       = var.INSTANCE_COUNT
   ami                         = data.aws_ami.centos7.id
-  spot_price                  = "0.0031"
-  instance_type               = "t3.micro"
-  vpc_security_group_ids      = [aws_security_group.allow_mongodb.id]
-  subnet_id                   = data.terraform_remote_state.vpc.outputs.PRIVATE_SUBNETS[1]
+  spot_price                  = var.SPOT_PRICE
+  instance_type               = var.INSTANCE_TYPE
+  vpc_security_group_ids      = [aws_security_group.allow_ec2.id]
+  subnet_id                   = element(data.terraform_remote_state.vpc.outputs.PRIVATE_SUBNETS, count.index)
   wait_for_fulfillment        = true
 
   tags                        = {
-    Name                      = "mongodb-${var.ENV}"
+    Name                      = "${var.COMPONENT}-${var.ENV}"
     Environment               = var.ENV
   }
 }
-resource "aws_security_group" "allow_mongodb" {
-  name                        = "allow_mongodb"
+
+resource "aws_ec2_tag" "spot" {
+  count                       = var.INSTANCE_COUNT
+  resource_id                 = element(aws_spot_instance_request.instances.*.spot_instance_id, count.index)
+  key                         = "Name"
+  value                       = "${var.COMPONENT}-${var.ENV}"
+}
+resource "aws_security_group" "allow_ec2" {
+  name                        = "allow_${var.COMPONENT}"
   description                 = "AllowMongoDB"
   vpc_id                      = data.terraform_remote_state.vpc.outputs.VPC_ID
 
@@ -25,7 +33,7 @@ resource "aws_security_group" "allow_mongodb" {
   }
 
   ingress {
-    description               = "MONGODB"
+    description               = "${var.COMPONENT}"
     from_port                 = 27017
     to_port                   = 27017
     protocol                  = "tcp"
@@ -41,21 +49,15 @@ resource "aws_security_group" "allow_mongodb" {
   }
 
   tags                        = {
-    Name                      = "AllowMongoDB"
+    Name                      = "Allow${var.COMPONENT}"
   }
 }
 
-//resource "null_resource" "wait" {
-//  provisioner "local-exec" {
-//    command                   = "sleep 30"
-//  }
-//}
-
-resource "null_resource" "ansible-mongo" {
-//  depends_on = [null_resource.wait]
-  provisioner "remote-exec" {
+resource "null_resource" "ansible-apply" {
+  count                       = var.INSTANCE_COUNT
+   provisioner "remote-exec" {
     connection {
-      host                    = aws_spot_instance_request.mongodb.private_ip
+      host                    = element(aws_spot_instance_request.instances.*.private_ip, count.index)
       user                    = jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["SSH_USER"]
       password                = jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["SSH_PASS"]
     }
@@ -64,8 +66,9 @@ resource "null_resource" "ansible-mongo" {
       "sudo yum install python3-pip -y",
       "sudo pip3 install pip --upgrade",
       "sudo pip3 install ansible==4.1.0",
-      "ansible-pull -i localhost, -U https://github.com/sainathreddykalva/ansible.git roboshop-pull.yml roboshop-pull.yml -e COMPONENT=mongodb"
+      "ansible-pull -i localhost, -U https://github.com/sainathreddykalva/ansible.git roboshop-pull.yml roboshop-pull.yml -e COMPONENT=${var.COMPONENT}"
     ]
 
   }
 }
+
