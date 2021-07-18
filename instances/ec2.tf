@@ -86,3 +86,18 @@ resource "aws_lb_target_group_attachment" "tg-attach" {
   port                        = var.PORT
 }
 
+resource "aws_lb_listener_rule" "static" {
+  listener_arn                = var.LB_ARN
+  priority                    = var.LB_RULE_WEIGHT
+
+  action {
+    type                      = "forward"
+    target_group_arn          = aws_lb_target_group.target-group.arn
+  }
+
+  condition {
+    host_header {
+      values = ["${var.COMPONENT}-${var.ENV}.roboshop.internal"]
+    }
+  }
+}
