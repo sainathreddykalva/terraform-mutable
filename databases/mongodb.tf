@@ -11,6 +11,12 @@ resource "aws_spot_instance_request" "mongodb" {
     Environment               = var.ENV
   }
 }
+
+resource "aws_ec2_tag" "mongo" {
+  resource_id                 = aws_spot_instance_request.mongodb.spot_instance_id
+  key                         = "Name"
+  value                       = "mongodb-${var.ENV}"
+}
 resource "aws_security_group" "allow_mongodb" {
   name                        = "allow_mongodb"
   description                 = "AllowMongoDB"
