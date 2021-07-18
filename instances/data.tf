@@ -4,7 +4,6 @@ data "aws_ami" "centos7" {
   owners           = ["973714476881"]
 }
 
-
 data "terraform_remote_state" "vpc" {
   backend = "s3"
 
