@@ -77,6 +77,11 @@ resource "aws_lb_target_group" "target-group" {
   port                        = var.PORT
   protocol                    = "HTTP"
   vpc_id                      = data.terraform_remote_state.vpc.outputs.VPC_ID
+  health_check {
+    path                      = var.HEALTH_PATH
+    port                      = var.PORT
+    interval                  = 10
+  }
 }
 
 resource "aws_lb_target_group_attachment" "tg-attach" {
@@ -86,8 +91,8 @@ resource "aws_lb_target_group_attachment" "tg-attach" {
   port                        = var.PORT
 }
 
-resource "aws_lb_listener_rule" "static" {
-  listener_arn                = var.LB_ARN
+resource "aws_lb_listener_rule" "component-rule" {
+  listener_arn                = var.LISTENER_ARN
   priority                    = var.LB_RULE_WEIGHT
 
   action {
@@ -100,4 +105,11 @@ resource "aws_lb_listener_rule" "static" {
       values = ["${var.COMPONENT}-${var.ENV}.roboshop.internal"]
     }
   }
+}
+resource "aws_route53_record" "component-record" {
+  zone_id = data.terraform_remote_state.vpc.outputs.HOSTED_ZONE_ID
+  name    = "${var.COMPONENT}-${var.ENV}.roboshop.internal"
+  type    = "CNAME"
+  ttl     = "300"
+  records = [var.LB_DNSNAME]
 }
