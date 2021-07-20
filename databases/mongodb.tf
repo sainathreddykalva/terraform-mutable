@@ -75,3 +75,12 @@ resource "null_resource" "ansible-mongo" {
 
   }
 }
+
+resource "aws_route53_record" "mongodb-record" {
+  zone_id                     = data.terraform_remote_state.vpc.outputs.HOSTED_ZONE_ID
+  name                        = "mongodb-${var.ENV}.roboshop.internal"
+  type                        = "A"
+  ttl                         = "300"
+  records                     = [aws_spot_instance_request.mongodb.private_ip]
+}
+
