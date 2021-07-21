@@ -73,7 +73,6 @@ cd /tmp
 unzip -o mysql.zip
 cd mysql-main
 mysql -h ${aws_db_instance.default.address} -u${jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["RDS_MYSQL_USER"]} -p${jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["RDS_MYSQL_PASS"]} <shipping.sql
-//mysql -h ${aws_db_instance.default.address} -u admindev -pbmJBsezvXD3cj <shipping.sql
 EOF
   }
 }
