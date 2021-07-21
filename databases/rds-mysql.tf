@@ -64,16 +64,16 @@ resource "aws_route53_record" "mysql-record" {
   records                     = [aws_db_instance.default.address]
 }
 
-//resource "null_resource" "mysql-schema" {
-//  provisioner "local-exec" {
-//    command =<<EOF
-//sudo yum install mysql -y
-//curl -s -L -o /tmp/mysql.zip "https://github.com/roboshop-devops-project/mysql/archive/main.zip"
-//cd /tmp
-//unzip -o mysql.zip
-//cd mysql-main
-//mysql -h ${aws_db_instance.default.address} -u${jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["RDS_MYSQL_USER"]} -p${jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["RDS_MYSQL_PASS"]} <shipping.sql
-//EOF
-//  }
-//}
+resource "null_resource" "mysql-schema" {
+  provisioner "local-exec" {
+    command =<<EOF
+sudo yum install mysql -y
+curl -s -L -o /tmp/mysql.zip "https://github.com/roboshop-devops-project/mysql/archive/main.zip"
+cd /tmp
+unzip -o mysql.zip
+cd mysql-main
+mysql -h ${aws_db_instance.default.address} -u${jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["RDS_MYSQL_USER"]} -p${jsondecode(data.aws_secretsmanager_secret_version.secrets.secret_string)["RDS_MYSQL_PASS"]} <shipping.sql
+EOF
+  }
+}
 
